@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Планировщик</title>
+    <link rel="stylesheet" href="/Frontend/css/styleRouteP.css">
+</head>
+<body>
+    <!-- Шапка -->
+    <header>
+        <a class="back" href="/"><</a>
+        <h1 style="color: white">Туристический гид</h1>
+        <p>Ваш лучший путеводитель по достопримечательностям мира</p>
+        <div class="circleProfile"></div>
+    </header>
+
+    
+    <h1>Планирование маршрута</h1>
+    <form id="search-form">
+        <label for="region">Введите регион или город</label>
+        <br>
+        <input type="text" id="region" placeholder="&#128269; Регион или город">
+        <p>
+            <button type="submit">Поиск</button> 
+            <button type="reset" onclick="clearAttractionTable()">Очистить</button>
+        </p>
+    </form>
+
+    <!-- Таблица для отображения достопримечательностей -->
+    <table id="attractions-table">
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Регион</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Список достопримечательностей будет добавлен сюда -->
+        </tbody>
+    </table>
+
+    <!-- Таблица для маршрута -->
+    <table id="route-table">
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Регион</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Достопримечательности маршрута будут добавлены сюда -->
+        </tbody>
+    </table>
+    <button onclick="clearRouteTable()">Очистить все достопримечательности из маршрута</button>
+    <button onclick="saveRoute()">Готово</button>
+
+    <script>
+        const form = document.getElementById('search-form');
+        const attractionsTableBody = document.getElementById('attractions-table').querySelector('tbody');
+        const routeTableBody = document.getElementById('route-table').querySelector('tbody');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Отключаем стандартное поведение формы
+            const region = document.getElementById('region').value;
+
+            // Загружаем данные с сервера
+            const response = await fetch(`/attractions?region=${encodeURIComponent(region)}`);
+            if (!response.ok) {
+                console.error('Error fetching attractions:', response.statusText);
+                return;
+            }
+
+            const data = await response.json();
+            clearAttractionTable(); // Очистить таблицу перед добавлением новых данных
+
+            // Добавляем данные в таблицу
+            data.forEach(attraction => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${attraction.name}</td>
+                    <td>${attraction.region}</td>
+                    <td><button onclick='addInRoute(${JSON.stringify(attraction)})'>Добавить в маршрут</button></td>
+                `;
+                attractionsTableBody.appendChild(row);
+            });
+        });
+
+        function addInRoute(attraction) {
+            // Добавляем строку в таблицу маршрута
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${attraction.name}</td>
+                <td>${attraction.region}</td>
+                <td><button class="del_in" onclick="delRow(this)">Очистить</button></td>
+            `;
+            routeTableBody.appendChild(row);
+        }
+
+        function clearAttractionTable() {
+            attractionsTableBody.innerHTML = '';
+        }
+
+        function clearRouteTable() {
+            routeTableBody.innerHTML = ''
+        }
+
+
+       
+        async function saveRoute() {
+            const rows = Array.from(routeTableBody.querySelectorAll('tr'));
+            const route = rows.map(row => ({
+                name: row.cells[0].innerText,
+                region: row.cells[1].innerText
+            }));
+        
+            // Загружаем существующую историю с сервера
+            const responseGet = await fetch('/getHistory');
+            const history = responseGet.ok ? await responseGet.json() : [];
+        
+            // Добавляем новый маршрут в историю
+            history.push(route);
+        
+            // Сохраняем историю на сервере
+            const responseSave = await fetch('/saveHistory', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(history)
+            });
+        
+            if (responseSave.ok) {
+                clearRouteTable(); // Очистить таблицу маршрута
+            } else {
+                console.error('Ошибка при сохранении маршрута');
+            }
+        }
+                
+        // Удаление строки из таблицы маршрута
+        function delRow(button) {
+            button.closest('tr').remove();
+        }
+    </script>
+</body>
+</html>

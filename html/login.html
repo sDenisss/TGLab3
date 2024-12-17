@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход</title>
+    <link rel="stylesheet" href="/Frontend/css/styleLogin.css"> <!-- Подключаем файл стилей -->
+</head>
+<body>
+    <main class="mainpr">
+        <div class="profile">
+            <a class="back" href="/"><</a>
+            <h2 style="text-align: center">Вход</h2>
+            <div class="profile-row-name">
+                <span class="label1">Имя:</span>
+                <input type="text" id="name">
+            </div>
+            <div class="profile-row-password">
+                <span class="label2">Пароль:</span>
+                <input type="password" id="password">
+            </div>
+            <div class="reg">
+                <a href="registry">Зарегистрироваться</a>
+            <div class="confirm">
+                <a id="loginBtn" href="#" onclick="logIn();">Подтвердить</a>
+            </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        async function logIn() {
+            const username = document.getElementById("name").value;
+            const password = document.getElementById("password").value;
+        
+            // Получаем почту пользователя
+            const emailResponse = await fetch("/getEmail", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ Username: username, Password: password })
+            });
+        
+            const emailResult = await emailResponse.json();
+        
+            if (!emailResponse.ok) {
+                alert(emailResult.message || "Ошибка получения данных. Проверьте логин и пароль.");
+                return;
+            }
+        
+            const email = emailResult.email;
+        
+            // Выполняем вход
+            const response = await fetch("/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ Username: username, Email: email, Password: password })
+            });
+        
+            const result = await response.json();
+        
+            if (response.ok) {
+                alert(result.message);
+        
+                // Сохраняем текущего пользователя отдельно
+                const currentUser = { username, email, password };
+                localStorage.setItem("currentUser", JSON.stringify(currentUser));
+        
+                // Добавляем пользователя в общий массив истории
+                const history = JSON.parse(localStorage.getItem("usHistory")) || [];
+                history.push(currentUser);
+                localStorage.setItem("usHistory", JSON.stringify(history));
+        
+                // Перенаправление на страницу профиля
+                window.location.href = "/profile";
+            } else {
+                alert(result.message);
+            }
+        }       
+       
+    </script>
+</body>
+</html>

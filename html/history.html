@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>История маршрутов</title>
+    <link rel="stylesheet" href="/Frontend/css/styleHistory.css">
+</head>
+<body>
+    <!-- Шапка -->
+    <header>
+        <div class="header-container">
+            <a class="back" href="/"><</a>
+            <h1>Туристический гид</h1>
+            <p>Ваш лучший путеводитель по достопримечательностям мира</p>
+            <div class="circle-profile"></div>
+        </div>
+    </header>
+
+    <main>
+        <h1 class="page-title">История маршрутов</h1>
+        <table id="history-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Достопримечательности</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Маршруты будут добавлены сюда -->
+            </tbody>
+        </table>
+        <button class="clear-history-btn" onclick="clearHistory()">Очистить Историю</button>
+    </main>
+
+    <script>
+        const historyTableBody = document.getElementById('history-table').querySelector('tbody');
+
+        async function loadHistory() {
+            const response = await fetch('/getHistory');
+            if (!response.ok) {
+                console.error('Ошибка загрузки истории:', response.statusText);
+                return;
+            }
+
+            const history = await response.json();
+            historyTableBody.innerHTML = '';
+
+            history.forEach((route, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${route.map(attraction => `${attraction.name} (${attraction.region})`).join(', ')}</td>
+                `;
+                historyTableBody.appendChild(row);
+            });
+        }
+
+        async function clearHistory() {
+            const response = await fetch('/clearHistory', { method: 'POST' });
+
+            if (response.ok) {
+                historyTableBody.innerHTML = '';
+            } else {
+                console.error('Ошибка при очистке истории');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadHistory);
+    </script>
+</body>
+</html>

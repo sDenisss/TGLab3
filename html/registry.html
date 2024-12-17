@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация</title>
+    <link rel="stylesheet" href="/Frontend/css/styleRegistry.css"> <!-- Подключаем файл стилей -->
+</head>
+<body>
+    <main class="mainpr">
+        <div class="profile">
+            <a class="back" href="/"><</a>
+            <h2 style="text-align: center">Регистрация</h2>
+            <div class="profile-row-name">
+                <span class="label1">Имя:</span>
+                <input type="text" id="name">
+            </div>
+            <div class="profile-row-mail">
+                <span class="label2">Почта:</span>
+                <input type="text" id="mail">
+            </div>
+            <div class="profile-row-password">
+                <span class="label3">Пароль:</span>
+                <input type="text" id="password">
+            </div>
+            <div class="log">
+                <a href="login">Войти</a>
+            </div>
+            <div class="add">
+                <a id="adduser" href="#" onclick="saveData();">Сохранить</a>
+            </div>
+        </div>
+    </main>
+    <script>
+        async function saveData() {
+            const username = document.getElementById("name").value;
+            const email = document.getElementById("mail").value;
+            const password = document.getElementById("password").value;
+        
+            // Проверка на заполнение всех полей
+            if (!username || !email || !password) {
+                alert("Пожалуйста, заполните все поля!");
+                return;
+            }
+        
+            // Отправка данных на сервер
+            const response = await fetch("/registry", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ Username: username, Email: email, Password: password})
+            });
+        
+            const result = await response.json();
+        
+            if (response.ok) {
+                alert(result.message);
+        
+                // Сохранение текущего пользователя
+                const currentUser = { username, email, password };
+                localStorage.setItem("currentUser", JSON.stringify(currentUser));
+        
+                // Перенаправление на страницу профиля
+                window.location.href = "/profile";
+            } else {
+                alert(result.message);
+            }
+        }
+    </script>
+</body>
+</html>
